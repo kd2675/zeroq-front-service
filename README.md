@@ -1,6 +1,9 @@
 # ZeroQ Service Web
 
-ZeroQ 사용자용 고객 서비스 웹앱입니다. 공간 탐색, 점유 정보 확인, 리뷰 및 즐겨찾기 기능을 제공합니다.
+ZeroQ 일반 유저(사용자) 대상 서비스 웹앱입니다. 공간 탐색, 점유 정보 확인, 리뷰 및 즐겨찾기 기능을 제공합니다.
+
+## 대상 역할
+- `USER` (end-user)
 
 ## 연결되는 백엔드
 - API Gateway: `http://localhost:8080` (cloud-back-server)
