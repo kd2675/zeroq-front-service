@@ -4,11 +4,7 @@ import { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
-  clearAccessToken,
-  getAccessToken,
-  getUserFromToken,
-  isTokenExpired,
-  refreshAccessToken,
+  ensureAccessToken,
   setAccessToken,
 } from '@/app/lib/auth';
 
@@ -30,22 +26,8 @@ function LoginPageContent() {
         return;
       }
 
-      const existingToken = getAccessToken();
-      if (!existingToken) {
-        return;
-      }
-
-      const existingUser = getUserFromToken(existingToken);
-      if (existingUser?.exp && isTokenExpired(existingUser.exp)) {
-        const refreshedToken = await refreshAccessToken();
-        if (cancelled) {
-          return;
-        }
-        if (refreshedToken) {
-          router.replace('/');
-          return;
-        }
-        clearAccessToken();
+      const restoredToken = await ensureAccessToken();
+      if (cancelled || !restoredToken) {
         return;
       }
 
@@ -60,7 +42,11 @@ function LoginPageContent() {
   }, [searchParams, router]);
 
   const handleNaverLogin = () => {
-    window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorize/naver`;
+    window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorize/naver-zeroq-service`;
+  };
+
+  const handleKakaoLogin = () => {
+    window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorize/kakao-zeroq-service`;
   };
 
   return (
@@ -100,6 +86,12 @@ function LoginPageContent() {
               className="transition-transform duration-300 group-hover:scale-110"
             />
             <span>Login with Naver</span>
+          </button>
+          <button
+            onClick={handleKakaoLogin}
+            className="group relative flex w-full items-center justify-center gap-3 rounded-lg border border-transparent bg-[#FEE500] py-3 px-4 text-lg font-semibold text-[#191919] transition-all duration-300 ease-in-out hover:bg-[#FEE500]/90 focus:outline-none focus:ring-2 focus:ring-[#FEE500] focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+          >
+            <span>Login with Kakao</span>
           </button>
         </div>
 
