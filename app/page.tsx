@@ -1,40 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import Image from "next/image";
-import axios from 'axios';
+import { useRouter } from "next/navigation";
+import { clearAccessToken, logout } from "@/app/lib/auth";
+import useAuthSession from "@/app/hooks/useAuthSession";
 
 export default function Home() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // null for loading state
-
-  useEffect(() => {
-    // This check only runs on the client-side
-    const token = localStorage.getItem('accessToken');
-    setIsLoggedIn(!!token);
-  }, []);
+  const router = useRouter();
+  const { isHydrated, authStatus, user } = useAuthSession();
+  const isLoggedIn = authStatus === "in";
 
   const handleSignOut = async () => {
-    const token = localStorage.getItem('accessToken');
-    
     try {
-      await axios.post('http://localhost:8080/auth/logout', {}, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        withCredentials: true
-      });
-    } catch (error) {
-      console.error('Logout failed:', error);
+      await logout();
+    } catch {
+      // ignore logout API failure and clear local session
     } finally {
-      localStorage.removeItem('accessToken');
-      setIsLoggedIn(false);
-      window.location.reload();
+      clearAccessToken();
+      router.replace("/login");
     }
   };
 
   const renderAuthButton = () => {
-    // While checking auth status, show a skeleton button
-    if (isLoggedIn === null) {
+    if (!isHydrated || authStatus === "unknown") {
       return (
         <div className="flex h-12 w-full animate-pulse items-center justify-center rounded-full bg-gray-300 dark:bg-gray-700 md:w-[158px]" />
       );
@@ -55,11 +44,20 @@ export default function Home() {
       <a
         className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
         href="/login"
-      >
-        Sign in
-      </a>
+        >
+          Sign in
+        </a>
     );
   };
+
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+    if (authStatus === "out") {
+      clearAccessToken();
+    }
+  }, [authStatus, isHydrated]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
@@ -77,7 +75,7 @@ export default function Home() {
             Welcome to ZeroQ.
           </h1>
           <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            {isLoggedIn ? 'You are logged in.' : 'Please sign in to continue.'}
+            {isLoggedIn ? `You are logged in as ${user?.username ?? "user"}.` : 'Please sign in to continue.'}
           </p>
         </div>
         <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">

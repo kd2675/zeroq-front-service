@@ -3,21 +3,64 @@
 import { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import {
+  clearAccessToken,
+  getAccessToken,
+  getUserFromToken,
+  isTokenExpired,
+  refreshAccessToken,
+  setAccessToken,
+} from '@/app/lib/auth';
+
+const GATEWAY_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 function LoginPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const expired = searchParams.get("expired") === "1";
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    if (token) {
-      localStorage.setItem('accessToken', token);
-      router.push('/');
-    }
+    let cancelled = false;
+
+    const bootstrap = async () => {
+      const token = searchParams.get('token');
+      if (token) {
+        setAccessToken(token);
+        router.replace('/');
+        return;
+      }
+
+      const existingToken = getAccessToken();
+      if (!existingToken) {
+        return;
+      }
+
+      const existingUser = getUserFromToken(existingToken);
+      if (existingUser?.exp && isTokenExpired(existingUser.exp)) {
+        const refreshedToken = await refreshAccessToken();
+        if (cancelled) {
+          return;
+        }
+        if (refreshedToken) {
+          router.replace('/');
+          return;
+        }
+        clearAccessToken();
+        return;
+      }
+
+      router.replace('/');
+    };
+
+    void bootstrap();
+
+    return () => {
+      cancelled = true;
+    };
   }, [searchParams, router]);
 
   const handleNaverLogin = () => {
-    window.location.href = 'http://localhost:8080/oauth2/authorize/naver';
+    window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorize/naver`;
   };
 
   return (
@@ -63,6 +106,12 @@ function LoginPageContent() {
         <p className="text-center text-xs text-gray-500 dark:text-gray-400">
           By continuing, you agree to our Terms of Service and Privacy Policy.
         </p>
+
+        {expired ? (
+          <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center text-sm text-blue-700">
+            세션이 만료되었습니다. 다시 로그인해 주세요.
+          </p>
+        ) : null}
       </div>
     </div>
   );
