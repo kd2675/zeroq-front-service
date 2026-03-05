@@ -2,21 +2,23 @@ import { postJson } from "@/app/lib/api";
 import { emitAuthChanged, emitAuthExpired } from "@/app/lib/authEvents";
 import type { LoginResponse, AuthUser } from "@/app/types/auth";
 
-const ACCESS_TOKEN_KEY = "accessToken";
 const TOKEN_EXPIRY_LEEWAY_SECONDS = 300;
+let accessTokenMemory: string | null = null;
+
+const DEFAULT_AUTH_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") {
     return null;
   }
-  return window.localStorage.getItem(ACCESS_TOKEN_KEY);
+  return accessTokenMemory;
 }
 
 export function setAccessToken(token: string): void {
   if (typeof window === "undefined") {
     return;
   }
-  window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  accessTokenMemory = token;
   emitAuthChanged();
 }
 
@@ -24,8 +26,12 @@ export function clearAccessToken(): void {
   if (typeof window === "undefined") {
     return;
   }
-  window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+  accessTokenMemory = null;
   emitAuthChanged();
+}
+
+export function clearAuthTokens(): void {
+  clearAccessToken();
 }
 
 function decodeBase64Url(value: string): string | null {
@@ -109,7 +115,19 @@ export function notifyAuthExpired(reason: AuthExpireReason = "expired"): void {
 export async function logout(): Promise<void> {
   const token = getAccessToken();
   const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
-  await postJson<void>("/auth/logout", {}, headers);
+  try {
+    await postJson<void>("/auth/logout", {}, headers);
+  } finally {
+    clearAuthTokens();
+  }
+}
+
+export async function beginOAuthLogin(provider = "naver"): Promise<void> {
+  if (typeof window === "undefined") {
+    return;
+  }
+  const normalizedProvider = provider?.trim() || "naver";
+  window.location.href = `${DEFAULT_AUTH_BASE_URL}/auth/bff/login/zeroq-front-service?provider=${encodeURIComponent(normalizedProvider)}`;
 }
 
 export async function refreshAccessToken(): Promise<string | null> {

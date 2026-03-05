@@ -9,16 +9,16 @@ ZeroQ 일반 유저(사용자) 대상 서비스 웹앱입니다. 공간 탐색, 
 - API Gateway: `http://localhost:8080` (cloud-back-server)
 
 ## 포트
-- 개발 서버: `http://localhost:3001`
+- 개발 서버: `http://localhost:3003`
 
 ## 시작하기
 ```bash
 npm install
-npm run dev -- -p 3001
+npm run dev
 ```
 
 ## 스크립트
-- `npm run dev -- -p 3001` 개발 서버 실행 (3001)
+- `npm run dev` 개발 서버 실행 (3003)
 - `npm run build` 프로덕션 빌드
 - `npm run start` 프로덕션 서버 실행
 - `npm run lint` ESLint 실행

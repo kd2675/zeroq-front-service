@@ -4,38 +4,47 @@ import { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
+  beginOAuthLogin,
   clearAccessToken,
   getAccessToken,
   getUserFromToken,
   isTokenExpired,
   refreshAccessToken,
-  setAccessToken,
 } from '@/app/lib/auth';
-
-const GATEWAY_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 function LoginPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const expired = searchParams.get("expired") === "1";
+  const expired = searchParams.get('expired') === '1';
+  const oauth = searchParams.get('oauth') === '1';
+  const oauthError = searchParams.get('oauthError') === '1';
 
   useEffect(() => {
     let cancelled = false;
 
     const bootstrap = async () => {
-      const token = searchParams.get('token');
-      if (token) {
-        setAccessToken(token);
-        router.replace('/');
+      if (oauth) {
+        const refreshed = await refreshAccessToken();
+        if (cancelled) {
+          return;
+        }
+        if (refreshed) {
+          router.replace('/');
+          return;
+        }
+        clearAccessToken();
         return;
       }
 
-      const existingToken = getAccessToken();
-      if (!existingToken) {
+      let activeToken = getAccessToken();
+      if (!activeToken) {
+        activeToken = await refreshAccessToken();
+      }
+      if (cancelled || !activeToken) {
         return;
       }
 
-      const existingUser = getUserFromToken(existingToken);
+      const existingUser = getUserFromToken(activeToken);
       if (existingUser?.exp && isTokenExpired(existingUser.exp)) {
         const refreshedToken = await refreshAccessToken();
         if (cancelled) {
@@ -57,16 +66,15 @@ function LoginPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [searchParams, router]);
+  }, [oauth, searchParams, router]);
 
-  const handleNaverLogin = () => {
-    window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorize/naver`;
+  const handleNaverLogin = async () => {
+    await beginOAuthLogin('naver');
   };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-lg dark:bg-gray-800 md:p-10">
-        
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
             Welcome to ZeroQ
@@ -110,6 +118,12 @@ function LoginPageContent() {
         {expired ? (
           <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center text-sm text-blue-700">
             세션이 만료되었습니다. 다시 로그인해 주세요.
+          </p>
+        ) : null}
+
+        {oauthError ? (
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-center text-sm text-amber-700">
+            소셜 로그인에 실패했습니다. 다시 시도해 주세요.
           </p>
         ) : null}
       </div>
