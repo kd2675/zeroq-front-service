@@ -1,34 +1,49 @@
-# ZeroQ Service Web
+# zeroq-front-service
 
-ZeroQ 일반 유저(사용자) 대상 서비스 웹앱입니다. 공간 탐색, 점유 정보 확인, 리뷰 및 즐겨찾기 기능을 제공합니다.
+ZeroQ 일반 사용자용 Next.js 앱입니다. 현재 구현은 도메인 기능 화면보다 로그인과 세션 유지 흐름에 더 가깝습니다.
 
-## 대상 역할
-- `USER` (end-user)
+## 현재 라우트
 
-## 연결되는 백엔드
-- API Gateway: `http://localhost:8080` (cloud-back-server)
+- `/`
+- `/login`
 
-## 포트
-- 개발 서버: `http://localhost:3001`
+## 역할
 
-## 시작하기
+- 일반 사용자 로그인 진입점
+- 세션 복구와 토큰 bootstrap
+- Naver, Kakao OAuth 로그인 시작
+
+## 실행
+
 ```bash
 npm install
-npm run dev -- -p 3001
+npm run dev
+npm run build
+npm run start
+npm run lint
 ```
 
-## 스크립트
-- `npm run dev -- -p 3001` 개발 서버 실행 (3001)
-- `npm run build` 프로덕션 빌드
-- `npm run start` 프로덕션 서버 실행
-- `npm run lint` ESLint 실행
+## 포트
+
+- dev: `3001`
+- start: `3001`
 
 ## 환경 변수
-로컬 개발 시 `.env.local`을 생성합니다.
+
+`.env.local`
 
 ```bash
 NEXT_PUBLIC_API_URL=http://localhost:8080
 ```
 
+## 연동 포인트
+
+- OAuth authorize:
+  - `/oauth2/authorize/naver-zeroq-service`
+  - `/oauth2/authorize/kakao-zeroq-service`
+- API base 기본값: `http://localhost:8080`
+
 ## 참고
-- API 요청은 Gateway(8080)를 통해 백엔드로 라우팅됩니다.
+
+- 홈 화면은 아직 ZeroQ 제품 화면이라기보다 로그인 상태를 보여주는 경량 셸입니다.
+- 토큰 만료 시 `/login?expired=1` 흐름을 사용합니다.
