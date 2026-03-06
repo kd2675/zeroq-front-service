@@ -4,7 +4,7 @@ import { Suspense, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
-  ensureAccessToken,
+  bootstrapAccessToken,
   setAccessToken,
 } from '@/app/lib/auth';
 
@@ -26,7 +26,7 @@ function LoginPageContent() {
         return;
       }
 
-      const restoredToken = await ensureAccessToken();
+      const restoredToken = await bootstrapAccessToken();
       if (cancelled || !restoredToken) {
         return;
       }

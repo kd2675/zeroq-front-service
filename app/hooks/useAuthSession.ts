@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import {
+  bootstrapAccessToken,
   clearAccessToken,
-  ensureAccessToken,
   getAccessToken,
   getUserFromToken,
   isTokenExpired,
@@ -48,7 +48,7 @@ export default function useAuthSession() {
 
     const frameId = window.requestAnimationFrame(() => setIsHydrated(true));
     void (async () => {
-      await ensureAccessToken();
+      await bootstrapAccessToken();
       if (cancelled) {
         return;
       }

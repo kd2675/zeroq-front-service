@@ -5,6 +5,8 @@ import type { LoginResponse, AuthUser } from "@/app/types/auth";
 const TOKEN_EXPIRY_LEEWAY_SECONDS = 300;
 let accessTokenMemory: string | null = null;
 let refreshInFlight: Promise<string | null> | null = null;
+let bootstrapRefreshDone = false;
+let bootstrapRefreshInFlight: Promise<string | null> | null = null;
 
 export function getAccessToken(): string | null {
   return accessTokenMemory;
@@ -48,17 +50,12 @@ export function getUserFromToken(token?: string | null): AuthUser | null {
 
   try {
     const parsed = JSON.parse(payload) as Record<string, unknown>;
-    const rawUserId = parsed.userId;
-    const userId =
-      typeof rawUserId === "number"
-        ? rawUserId
-        : typeof rawUserId === "string"
-          ? Number(rawUserId)
-          : undefined;
+    const rawUserKey = parsed.userKey;
+    const userKey = typeof rawUserKey === "string" ? rawUserKey : undefined;
 
     return {
       username: typeof parsed.sub === "string" ? parsed.sub : undefined,
-      userId: Number.isFinite(userId) ? userId : undefined,
+      userKey,
       role: typeof parsed.role === "string" ? parsed.role : undefined,
       exp: typeof parsed.exp === "number" ? parsed.exp : undefined,
     };
@@ -125,9 +122,27 @@ export async function refreshAccessToken(): Promise<string | null> {
   return refreshInFlight;
 }
 
+export async function bootstrapAccessToken(): Promise<string | null> {
+  if (accessTokenMemory) {
+    return accessTokenMemory;
+  }
+  if (bootstrapRefreshDone) {
+    return null;
+  }
+  if (bootstrapRefreshInFlight) {
+    return bootstrapRefreshInFlight;
+  }
+
+  bootstrapRefreshInFlight = refreshAccessToken().finally(() => {
+    bootstrapRefreshDone = true;
+    bootstrapRefreshInFlight = null;
+  });
+  return bootstrapRefreshInFlight;
+}
+
 export async function ensureAccessToken(): Promise<string | null> {
   if (accessTokenMemory) {
     return accessTokenMemory;
   }
-  return refreshAccessToken();
+  return bootstrapAccessToken();
 }
