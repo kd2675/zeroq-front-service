@@ -64,6 +64,18 @@ export function getUserFromToken(token?: string | null): AuthUser | null {
   }
 }
 
+export function normalizeRole(role?: string | null): string | null {
+  if (!role) {
+    return null;
+  }
+  const normalized = role.trim().toUpperCase();
+  return normalized.startsWith("ROLE_") ? normalized.slice(5) : normalized;
+}
+
+export function isUserRole(role?: string | null): boolean {
+  return normalizeRole(role) === "USER";
+}
+
 export function isTokenExpired(
   exp?: number,
   leewaySeconds = TOKEN_EXPIRY_LEEWAY_SECONDS,

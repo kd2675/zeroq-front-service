@@ -9,9 +9,7 @@ import useAuthSession from "@/app/hooks/useAuthSession";
 type SpaceItem = {
   id: number;
   name: string;
-  capacity: number;
   address?: string;
-  categoryName?: string;
 };
 
 type PageResponse<T> = {
@@ -29,7 +27,6 @@ type Snapshot = {
 type SpaceSnapshot = {
   spaceId: number;
   spaceName: string;
-  capacity: number;
   snapshot: Snapshot;
 };
 
@@ -188,7 +185,6 @@ export default function Home() {
                   >
                     <h2 className="text-lg font-semibold text-slate-900">{space.name}</h2>
                     <p className="mt-1 text-xs text-slate-500">{space.address ?? "주소 정보 없음"}</p>
-                    <p className="mt-1 text-xs text-slate-500">수용 인원: {space.capacity}</p>
 
                     {snapshot ? (
                       <div className="mt-4 space-y-1 text-sm">

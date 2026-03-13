@@ -1,12 +1,16 @@
 'use client';
 
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
   bootstrapAccessToken,
+  clearAccessToken,
+  getUserFromToken,
+  isUserRole,
   setAccessToken,
 } from '@/app/lib/auth';
+import { initializeProfile } from '@/app/lib/profile';
 
 const GATEWAY_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -14,6 +18,7 @@ function LoginPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const expired = searchParams.get("expired") === "1";
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -22,12 +27,34 @@ function LoginPageContent() {
       const token = searchParams.get('token');
       if (token) {
         setAccessToken(token);
+        const user = getUserFromToken(token);
+        if (!isUserRole(user?.role)) {
+          clearAccessToken();
+          setError('zeroq-front-service는 USER 계정만 로그인할 수 있습니다.');
+          return;
+        }
+        const initializeResult = await initializeProfile(token);
+        if (cancelled) {
+          return;
+        }
+        if (initializeResult.error) {
+          clearAccessToken();
+          setError(`프로필 생성에 실패했습니다. (${initializeResult.error})`);
+          return;
+        }
         router.replace('/');
         return;
       }
 
       const restoredToken = await bootstrapAccessToken();
       if (cancelled || !restoredToken) {
+        return;
+      }
+
+      const restoredUser = getUserFromToken(restoredToken);
+      if (!isUserRole(restoredUser?.role)) {
+        clearAccessToken();
+        setError('zeroq-front-service는 USER 계정만 로그인할 수 있습니다.');
         return;
       }
 
@@ -102,6 +129,11 @@ function LoginPageContent() {
         {expired ? (
           <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-center text-sm text-blue-700">
             세션이 만료되었습니다. 다시 로그인해 주세요.
+          </p>
+        ) : null}
+        {error ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700">
+            {error}
           </p>
         ) : null}
       </div>
