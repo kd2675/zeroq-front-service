@@ -1,4 +1,4 @@
-import { postJson } from "@/app/lib/api";
+import { postJson, ZEROQ_CLIENT_ID } from "@/app/lib/api";
 import { emitAuthChanged, emitAuthExpired } from "@/app/lib/authEvents";
 import type { LoginResponse, AuthUser } from "@/app/types/auth";
 
@@ -7,6 +7,15 @@ let accessTokenMemory: string | null = null;
 let refreshInFlight: Promise<string | null> | null = null;
 let bootstrapRefreshDone = false;
 let bootstrapRefreshInFlight: Promise<string | null> | null = null;
+
+function withClientId(
+  headers: Record<string, string> = {},
+): Record<string, string> {
+  return {
+    "X-Client-Id": ZEROQ_CLIENT_ID,
+    ...headers,
+  };
+}
 
 export function getAccessToken(): string | null {
   return accessTokenMemory;
@@ -109,12 +118,18 @@ export function notifyAuthExpired(reason: AuthExpireReason = "expired"): void {
 
 export async function logout(): Promise<void> {
   const token = getAccessToken();
-  const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+  const headers = withClientId(
+    token ? { Authorization: `Bearer ${token}` } : undefined,
+  );
   await postJson<void>("/auth/logout", {}, headers);
 }
 
 async function requestRefreshAccessToken(): Promise<string | null> {
-  const result = await postJson<LoginResponse>("/auth/refresh", {});
+  const result = await postJson<LoginResponse>(
+    "/auth/refresh",
+    {},
+    withClientId(),
+  );
   if (!result.ok || !result.data?.accessToken) {
     return null;
   }
