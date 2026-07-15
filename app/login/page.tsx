@@ -4,13 +4,11 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
-  bootstrapAccessToken,
-  clearAccessToken,
-  getUserFromToken,
   isUserRole,
-  setAccessToken,
+  logout,
 } from '@/app/lib/auth';
-import { initializeProfile } from '@/app/lib/profile';
+import useAuthSession from '@/app/hooks/useAuthSession';
+import { consumeOAuthNextPath, rememberOAuthNextPath } from '@/app/lib/authRouting';
 
 const GATEWAY_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
@@ -18,63 +16,49 @@ function LoginPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const expired = searchParams.get("expired") === "1";
+  const oauthError = searchParams.get("error");
+  const loginError = searchParams.get("loginError");
   const [error, setError] = useState<string | null>(null);
+  const { authStatus, isHydrated, user } = useAuthSession();
+  const queryError = oauthError || loginError ? resolveLoginError(loginError) : null;
+  const isProcessing = !queryError && (!isHydrated || authStatus === "unknown" || authStatus === "in");
 
   useEffect(() => {
-    let cancelled = false;
-
-    const bootstrap = async () => {
-      const token = searchParams.get('token');
-      if (token) {
-        setAccessToken(token);
-        const user = getUserFromToken(token);
-        if (!isUserRole(user?.role)) {
-          clearAccessToken();
-          setError('zeroq-front-service는 USER 계정만 로그인할 수 있습니다.');
-          return;
-        }
-        const initializeResult = await initializeProfile(token);
-        if (cancelled) {
-          return;
-        }
-        if (initializeResult.error) {
-          clearAccessToken();
-          setError(`프로필 생성에 실패했습니다. (${initializeResult.error})`);
-          return;
-        }
-        router.replace('/');
-        return;
-      }
-
-      const restoredToken = await bootstrapAccessToken();
-      if (cancelled || !restoredToken) {
-        return;
-      }
-
-      const restoredUser = getUserFromToken(restoredToken);
-      if (!isUserRole(restoredUser?.role)) {
-        clearAccessToken();
-        setError('zeroq-front-service는 USER 계정만 로그인할 수 있습니다.');
-        return;
-      }
-
-      router.replace('/');
-    };
-
-    void bootstrap();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [searchParams, router]);
+    if (queryError) {
+      return;
+    }
+    if (!isHydrated || authStatus === "unknown" || authStatus === "out") {
+      return;
+    }
+    if (!isUserRole(user?.role)) {
+      void logout().finally(() => {
+        setError("ZeroQ 서비스는 USER 계정만 로그인할 수 있습니다.");
+      });
+      return;
+    }
+    router.replace(consumeOAuthNextPath());
+  }, [authStatus, isHydrated, queryError, router, user?.role]);
 
   const handleNaverLogin = () => {
-    window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorize/naver-zeroq-service`;
+    rememberOAuthNextPath("/");
+    window.location.replace(`${GATEWAY_BASE_URL}/oauth2/authorize/naver-zeroq-service`);
   };
 
   const handleKakaoLogin = () => {
-    window.location.href = `${GATEWAY_BASE_URL}/oauth2/authorize/kakao-zeroq-service`;
+    rememberOAuthNextPath("/");
+    window.location.replace(`${GATEWAY_BASE_URL}/oauth2/authorize/kakao-zeroq-service`);
   };
+
+  if (isProcessing) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-gray-50 px-4 dark:bg-gray-900" aria-live="polite">
+        <section className="text-center">
+          <span className="mx-auto block size-8 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" aria-hidden="true" />
+          <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">로그인 상태를 확인하고 있습니다.</p>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -131,14 +115,29 @@ function LoginPageContent() {
             세션이 만료되었습니다. 다시 로그인해 주세요.
           </p>
         ) : null}
-        {error ? (
+        {error ?? queryError ? (
           <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-center text-sm text-red-700">
-            {error}
+            {error ?? queryError}
           </p>
         ) : null}
       </div>
     </div>
   );
+}
+
+function resolveLoginError(loginError: string | null): string {
+  switch (loginError) {
+    case "unsupported_role":
+      return "ZeroQ 서비스는 USER 계정만 로그인할 수 있습니다.";
+    case "profile_initialize_failed":
+      return "프로필을 준비하지 못했습니다. 다시 로그인해 주세요.";
+    case "session_restore_failed":
+      return "소셜 로그인 세션을 확인할 수 없습니다. 다시 시도해 주세요.";
+    case "processing_failed":
+      return "로그인 정보를 처리하는 중 문제가 발생했습니다. 다시 시도해 주세요.";
+    default:
+      return "소셜 로그인에 실패했습니다. 다시 시도해 주세요.";
+  }
 }
 
 export default function LoginPage() {

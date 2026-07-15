@@ -6,12 +6,14 @@ ZeroQ 일반 사용자용 Next.js 앱입니다. 로그인 사용자 기준으로
 
 - `/`
 - `/login`
+- `/auth/callback`
 
 ## 역할
 
 - 일반 사용자 로그인 진입점
 - 세션 복구와 토큰 bootstrap
 - Naver, Kakao OAuth 로그인 시작
+- URL 토큰 없이 HttpOnly refresh cookie로 OAuth 로그인 완료
 - 공간별 실시간 혼잡도 카드 조회
 
 ## 실행

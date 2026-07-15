@@ -10,7 +10,7 @@ export default function AuthBootstrap() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (bootstrapStarted || pathname === "/login") {
+    if (bootstrapStarted || pathname === "/login" || pathname === "/auth/callback") {
       return;
     }
 

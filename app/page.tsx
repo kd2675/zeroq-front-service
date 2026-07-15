@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { clearAccessToken, ensureAccessToken, logout } from "@/app/lib/auth";
+import { ensureAccessToken, logout } from "@/app/lib/auth";
 import { getJson } from "@/app/lib/api";
 import useAuthSession from "@/app/hooks/useAuthSession";
 
@@ -55,7 +55,6 @@ export default function Home() {
 
     const token = await ensureAccessToken();
     if (!token) {
-      clearAccessToken();
       setLoading(false);
       return;
     }
@@ -105,9 +104,8 @@ export default function Home() {
     try {
       await logout();
     } catch {
-      // ignore logout API failure and clear local session
+      // The auth helper clears the local session even if the server request fails.
     } finally {
-      clearAccessToken();
       router.replace("/login");
     }
   };
