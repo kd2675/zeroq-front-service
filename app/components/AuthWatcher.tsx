@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { onAuthExpired } from "@/app/lib/authEvents";
-import { currentBrowserPath, rememberOAuthNextPath } from "@/app/lib/authRouting";
+import { buildLoginPath, currentBrowserPath } from "@/app/lib/authRouting";
 
 export default function AuthWatcher() {
   const router = useRouter();
@@ -14,8 +14,7 @@ export default function AuthWatcher() {
       if (pathname === "/login" || pathname === "/auth/callback") {
         return;
       }
-      rememberOAuthNextPath(currentBrowserPath());
-      router.push("/login?expired=1");
+      router.push(buildLoginPath(currentBrowserPath(), true));
     });
 
     return () => {

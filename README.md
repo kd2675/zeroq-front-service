@@ -10,7 +10,7 @@ ZeroQ 일반 사용자용 Next.js 앱입니다. 로그인 사용자 기준으로
 
 ## 역할
 
-- 일반 사용자 로그인 진입점
+- 일반 사용자 아이디 로그인/회원가입과 OAuth 진입점
 - 세션 복구와 토큰 bootstrap
 - Naver, Kakao OAuth 로그인 시작
 - URL 토큰 없이 HttpOnly refresh cookie로 OAuth 로그인 완료
@@ -44,6 +44,9 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 - OAuth authorize:
   - `/oauth2/authorize/naver-zeroq-service`
   - `/oauth2/authorize/kakao-zeroq-service`
+- Local auth:
+  - `/auth/login`
+  - `/api/users`
 - 공간/스냅샷 조회:
   - `/api/zeroq/v1/spaces`
   - `/api/zeroq/v1/space-sensors/spaces/{spaceId}/snapshot`
@@ -52,4 +55,4 @@ NEXT_PUBLIC_API_URL=http://localhost:8080
 ## 참고
 
 - 홈 화면은 인증 상태일 때 공간별 센서 기반 혼잡도 정보를 카드로 렌더링합니다.
-- 토큰 만료 시 `/login?expired=1` 흐름을 사용합니다.
+- 보호 화면에서 로그인 또는 세션 만료로 이동할 때 검증된 `next` 내부 경로를 유지하고, 인증 완료 후 원래 화면으로 복귀합니다.
