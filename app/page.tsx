@@ -17,10 +17,14 @@ type PageResponse<T> = {
 };
 
 type Snapshot = {
-  occupancyRate: number;
+  occupancyRate: number | null;
   crowdLevel: string;
   activeSensorCount: number;
-  occupiedCount: number;
+  configuredSensorCount: number;
+  reportingSensorCount: number;
+  occupiedCount: number | null;
+  dataStatus: "AVAILABLE" | "PARTIAL" | "UNAVAILABLE";
+  reportingCoveragePercent: number;
   lastMeasuredAt?: string;
 };
 
@@ -184,20 +188,34 @@ export default function Home() {
                     <h2 className="text-lg font-semibold text-slate-900">{space.name}</h2>
                     <p className="mt-1 text-xs text-slate-500">{space.address ?? "주소 정보 없음"}</p>
 
-                    {snapshot ? (
+                    {snapshot && snapshot.dataStatus !== "UNAVAILABLE" && snapshot.occupancyRate !== null ? (
                       <div className="mt-4 space-y-1 text-sm">
                         <p className="font-semibold text-slate-900">
                           혼잡도 {snapshot.occupancyRate.toFixed(1)}% ({snapshot.crowdLevel})
                         </p>
                         <p className="text-slate-700">
-                          점유 {snapshot.occupiedCount} / 활성 센서 {snapshot.activeSensorCount}
+                          점유 {snapshot.occupiedCount} / 보고 센서 {snapshot.reportingSensorCount}
+                          {" "}/ 설치 센서 {snapshot.configuredSensorCount}
                         </p>
+                        {snapshot.dataStatus === "PARTIAL" ? (
+                          <p className="text-xs font-medium text-amber-700">
+                            일부 센서만 보고 중입니다. 보고율 {snapshot.reportingCoveragePercent.toFixed(1)}%
+                          </p>
+                        ) : null}
                         <p className="text-xs text-slate-500">
                           마지막 측정: {snapshot.lastMeasuredAt ?? "-"}
                         </p>
                       </div>
                     ) : (
-                      <p className="mt-4 text-sm text-slate-500">아직 센서 스냅샷 데이터가 없습니다.</p>
+                      <div className="mt-4 space-y-1 text-sm">
+                        <p className="font-semibold text-amber-700">현재 혼잡도를 확인할 수 없습니다.</p>
+                        <p className="text-slate-600">
+                          센서 보고 0 / 설치 센서 {snapshot?.configuredSensorCount ?? 0}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          마지막 수신: {snapshot?.lastMeasuredAt ?? "없음"}
+                        </p>
+                      </div>
                     )}
                   </article>
                 );
