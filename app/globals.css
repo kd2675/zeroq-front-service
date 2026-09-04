@@ -8,10 +8,11 @@
   --surface: #ffffff;
   --border: #e2e8f0;
   --accent: #2563eb;
+  --accent-deep: #1d4ed8;
   --quiet: #047857;
   --medium: #d97706;
   --busy: #e11d48;
-  --font-geist-sans: "Inter", "Pretendard", "Noto Sans KR", "Segoe UI", Arial, Helvetica, sans-serif;
+  --font-geist-sans: system-ui, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", "Segoe UI", sans-serif;
   --font-geist-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
@@ -38,6 +39,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans);
   text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button,
@@ -66,6 +68,100 @@ select:not(:disabled) {
   font-weight: 900;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.zeroq-map-marker {
+  appearance: none;
+  position: relative;
+  display: grid;
+  width: 48px;
+  height: 32px;
+  padding: 0;
+  place-items: center;
+  border: 3px solid var(--surface);
+  border-radius: 12px 12px 12px 3px;
+  box-shadow: 0 5px 16px rgba(15, 23, 42, 0.28);
+  color: var(--surface);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  transform: rotate(-8deg);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.zeroq-map-marker::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 8px 8px 8px 1px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.zeroq-map-marker--quiet {
+  background: var(--quiet);
+}
+
+.zeroq-map-marker--medium {
+  background: var(--medium);
+}
+
+.zeroq-map-marker--busy {
+  background: var(--busy);
+}
+
+.zeroq-map-marker--unknown {
+  background: #64748b;
+}
+
+.zeroq-map-marker.is-selected {
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.42);
+  transform: rotate(0) scale(1.15);
+}
+
+.zeroq-map-marker:focus-visible,
+.zeroq-map-marker:hover {
+  transform: rotate(0) scale(1.08);
+}
+
+.zeroq-map-popup {
+  min-width: 9rem;
+  font-family: var(--font-geist-sans);
+}
+
+.zeroq-map-popup strong,
+.zeroq-map-popup span {
+  display: block;
+}
+
+.zeroq-map-popup strong {
+  color: var(--foreground);
+  font-size: 0.8rem;
+}
+
+.zeroq-map-popup span {
+  margin-top: 0.25rem;
+  color: #64748b;
+  font-size: 0.7rem;
+}
+
+.zeroq-map-popup a {
+  display: inline-block;
+  margin-top: 0.5rem;
+  color: var(--accent-deep);
+  font-size: 0.7rem;
+  font-weight: 800;
 }
 
 @media (prefers-reduced-motion: reduce) {

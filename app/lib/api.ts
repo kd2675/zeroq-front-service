@@ -1,3 +1,5 @@
+import axios from "axios";
+
 import type { ResponseEnvelope } from "@/app/types/response";
 
 const API_MODE = process.env.NEXT_PUBLIC_API_MODE ?? "direct";
@@ -47,21 +49,9 @@ function isEnvelope<T>(value: unknown): value is ResponseEnvelope<T> {
   );
 }
 
-function parseResponseBody(text: string): unknown {
-  if (!text) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
-}
-
 /**
  * ZeroQ 또는 Auth API의 공통 응답 envelope와 일반 JSON을 모두 해석하고
- * 15초 timeout·network 오류를 사용자가 이해할 수 있는 결과로 변환한다.
+ * Axios의 15초 timeout·network 오류를 사용자가 이해할 수 있는 결과로 변환한다.
  */
 async function requestJson<T>(
   path: string,
@@ -70,26 +60,23 @@ async function requestJson<T>(
   const method = options.method ?? "GET";
   const hasBody = options.body !== undefined;
   const baseUrl = options.baseUrl ?? API_BASE;
-  const abortController = new AbortController();
-  const timeoutId = setTimeout(() => abortController.abort(), REQUEST_TIMEOUT_MS);
-
   try {
-    const response = await fetch(`${baseUrl}${path}`, {
+    const response = await axios.request<unknown>({
+      url: `${baseUrl}${path}`,
       method,
       headers: {
         ...(hasBody ? { "Content-Type": "application/json" } : {}),
         ...(options.headers ?? {}),
       },
-      credentials: options.credentials ?? "include",
-      body: hasBody ? JSON.stringify(options.body) : undefined,
-      signal: abortController.signal,
+      withCredentials: (options.credentials ?? "include") === "include",
+      data: hasBody ? options.body : undefined,
+      timeout: REQUEST_TIMEOUT_MS,
+      validateStatus: () => true,
     });
-
-    const text = await response.text();
-    const parsed = parseResponseBody(text);
+    const parsed = response.data === "" ? null : response.data;
 
     if (isEnvelope<T>(parsed)) {
-      if (response.ok && parsed.success) {
+      if (response.status >= 200 && response.status < 300 && parsed.success) {
         return {
           ok: true,
           status: response.status,
@@ -107,7 +94,7 @@ async function requestJson<T>(
       };
     }
 
-    if (response.ok) {
+    if (response.status >= 200 && response.status < 300) {
       return {
         ok: true,
         status: response.status,
@@ -125,20 +112,20 @@ async function requestJson<T>(
         "요청 처리에 실패했습니다.",
     };
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
+    if (axios.isAxiosError(error) && error.code === "ECONNABORTED") {
       return {
         ok: false,
         data: null,
         message: "요청 시간이 초과되었습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.",
       };
     }
-    if (error instanceof Error) {
+    if (axios.isAxiosError(error)) {
       return {
         ok: false,
         data: null,
-        message: error instanceof TypeError
-          ? "서버에 연결할 수 없습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요."
-          : error.message,
+        message: error.response
+          ? error.message
+          : "서버에 연결할 수 없습니다. 네트워크 상태를 확인한 뒤 다시 시도해 주세요.",
       };
     }
 
@@ -147,8 +134,6 @@ async function requestJson<T>(
       data: null,
       message: "알 수 없는 네트워크 오류가 발생했습니다.",
     };
-  } finally {
-    clearTimeout(timeoutId);
   }
 }
 
@@ -199,4 +184,12 @@ export function patchJson<T>(
   headers?: Record<string, string>,
 ): Promise<ApiResult<T>> {
   return requestJson(path, { method: "PATCH", body, headers });
+}
+
+/** body 없이 ZeroQ DELETE 요청을 보내고 공통 응답 envelope를 해석한다. */
+export function deleteJson<T>(
+  path: string,
+  headers?: Record<string, string>,
+): Promise<ApiResult<T>> {
+  return requestJson(path, { method: "DELETE", headers });
 }

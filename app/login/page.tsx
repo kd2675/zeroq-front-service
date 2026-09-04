@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion } from "motion/react";
 
 import BrandMark from "@/app/components/BrandMark";
 import UiIcon from "@/app/components/UiIcon";
@@ -108,7 +109,7 @@ function LoginPageContent() {
         <BrandMark href="/" />
       </div>
       <section className="mx-auto grid min-h-[calc(100dvh-5.25rem)] w-full max-w-7xl items-center gap-10 py-10 lg:grid-cols-[minmax(0,1fr)_420px] lg:gap-20">
-        <div className="order-2 max-w-2xl lg:order-1">
+        <motion.div className="order-2 max-w-2xl lg:order-1" initial={{ opacity: 0, x: -18 }} animate={{ opacity: 1, x: 0 }}>
           <p className="eyebrow">Space, before you go</p>
           <h1 className="mt-4 break-keep text-4xl font-black leading-[1.07] tracking-[-0.055em] sm:text-6xl">
             혼잡도를 확인하고<br />움직이세요
@@ -121,13 +122,16 @@ function LoginPageContent() {
             <LoginBenefit title="투명한 상태" description="일부 보고와 측정 공백 구분" />
             <LoginBenefit title="선택적 위치" description="기기 안에서만 거리 계산" />
           </ul>
-        </div>
+        </motion.div>
 
-        <form
+        <motion.form
           onSubmit={handleSubmit}
           aria-busy={isSubmitting}
           noValidate
           className="order-1 rounded-[22px] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.09)] sm:p-6 lg:order-2"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08 }}
         >
           <div className="grid grid-cols-2 rounded-xl bg-slate-100 p-1" role="group" aria-label="인증 방식">
             {(["login", "signup"] as const).map((item) => (
@@ -200,7 +204,7 @@ function LoginPageContent() {
             <SocialButton label="카카오로 계속" tone="kakao" disabled={isSubmitting} onClick={() => startOAuthLogin("kakao-zeroq-service")} />
           </div>
           <p className="mt-5 text-center text-[11px] leading-5 text-slate-400">소셜 로그인은 각 제공자의 인증 화면으로 이동합니다.</p>
-        </form>
+        </motion.form>
       </section>
     </main>
   );

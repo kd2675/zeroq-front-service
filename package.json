@@ -2,27 +2,39 @@
   "name": "zeroq-front-service",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "npm@10.9.7",
+  "engines": {
+    "node": ">=22.22.2 <23 || >=24.20.0 <25"
+  },
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "eslint",
     "verify:auth": "node --no-warnings --experimental-strip-types scripts/verify-auth-flow.mjs",
-    "verify:space": "node --no-warnings --experimental-strip-types scripts/verify-space-presentation.mjs"
+    "verify:space": "node --no-warnings --experimental-strip-types scripts/verify-space-presentation.mjs",
+    "security:check": "node scripts/verify-dependency-security.mjs && npm run security:signatures",
+    "security:audit": "npm audit --omit=dev --audit-level=high",
+    "security:signatures": "npm audit signatures"
   },
   "dependencies": {
-    "next": "16.1.4",
+    "@reduxjs/toolkit": "2.12.0",
+    "@tanstack/react-query": "5.102.8",
+    "axios": "1.20.0",
+    "motion": "13.2.0",
+    "next": "16.3.4",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "react-redux": "9.3.0"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.1.4",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "20.19.43",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.4",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3"
   }
 }
