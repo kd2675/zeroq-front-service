@@ -1,4 +1,5 @@
 import { postJson } from "@/app/lib/api";
+import { buildServiceAuthHeaders } from "@/app/lib/auth";
 
 export type ProfileSummary = {
   profileId: number;
@@ -13,13 +14,14 @@ export type ProfileInitializeResult = {
   error?: string;
 };
 
+/** 로그인 계정을 ZeroQ 서비스 프로필에 멱등 연결하고 실패를 명시적 결과로 반환한다. */
 export async function initializeProfile(
   accessToken: string,
 ): Promise<ProfileInitializeResult> {
   const result = await postJson<ProfileSummary>(
     "/api/zeroq/v1/profile/initialize",
     {},
-    { Authorization: `Bearer ${accessToken}` },
+    buildServiceAuthHeaders(accessToken),
   );
 
   if (!result.ok || !result.data) {

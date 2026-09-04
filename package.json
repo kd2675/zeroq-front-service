@@ -7,10 +7,10 @@
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "eslint",
-    "verify:auth": "node --no-warnings --experimental-strip-types scripts/verify-auth-flow.mjs"
+    "verify:auth": "node --no-warnings --experimental-strip-types scripts/verify-auth-flow.mjs",
+    "verify:space": "node --no-warnings --experimental-strip-types scripts/verify-space-presentation.mjs"
   },
   "dependencies": {
-    "axios": "^1.13.4",
     "next": "16.1.4",
     "react": "19.2.3",
     "react-dom": "19.2.3"

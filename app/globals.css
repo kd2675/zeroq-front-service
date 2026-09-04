@@ -1,8 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f4f6f3;
+  --foreground: #0f172a;
+  --canvas: #f4f6f3;
+  --canvas-translucent: rgba(244, 246, 243, 0.88);
+  --surface: #ffffff;
+  --border: #e2e8f0;
+  --accent: #2563eb;
+  --quiet: #047857;
+  --medium: #d97706;
+  --busy: #e11d48;
   --font-geist-sans: "Inter", "Pretendard", "Noto Sans KR", "Segoe UI", Arial, Helvetica, sans-serif;
   --font-geist-mono: "JetBrains Mono", "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
@@ -14,15 +22,63 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
+  scroll-behavior: smooth;
 }
 
 body {
+  min-width: 320px;
+  min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans);
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button:not(:disabled),
+select:not(:disabled) {
+  cursor: pointer;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
+}
+
+.focus-ring:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.34);
+  outline-offset: 2px;
+}
+
+.eyebrow {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
